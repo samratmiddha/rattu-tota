@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'dart:io';
+import 'dart:async';
 
 void main() {
   runApp(const MyApp());
@@ -16,7 +18,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: const MyHomePage(title: 'Automation Bot'),
+      home: const MyHomePage(title: 'Rattu Tota'),
     );
   }
 }
@@ -31,63 +33,85 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+  late OverlayEntry? _overlayEntry;
 
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
+  void _showLoaderOverlay() {
+    WidgetsBinding.instance!.addPostFrameCallback((_) {
+      _overlayEntry = OverlayEntry(
+        builder: (context) => Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+      Overlay.of(context)!.insert(_overlayEntry!);
     });
+  }
+
+  void _hideLoaderOverlay() {
+    _overlayEntry!.remove();
+  }
+
+  void _showContentOverlay() {
+    _overlayEntry = OverlayEntry(
+      builder: (context) => Center(
+        child: Container(
+          width: 200,
+          height: 200,
+          color: Colors.grey.withOpacity(0.7),
+          child: Center(
+            child: Text(
+              'Press Escape to exit',
+              style: TextStyle(color: Colors.white, fontSize: 18),
+            ),
+          ),
+        ),
+      ),
+    );
+    Overlay.of(context).insert(_overlayEntry!);
+  }
+
+  void _hideContentOverlay() {
+    if (_overlayEntry != null) {
+      _overlayEntry!.remove();
+      _overlayEntry =
+          null; // Ensure to reset _overlayEntry to null after removal
+    }
+  }
+
+  Future<void> startMonitering() async {
+    var scriptPath = 'assets/tracking.exe';
+
+    var process = await Process.start(scriptPath, []);
+
+    _showLoaderOverlay();
+
+    Future.delayed(Duration(seconds: 2), () {
+      // Hide loader overlay and show content overlay
+      _hideLoaderOverlay();
+      _showContentOverlay();
+    });
+
+    await process.exitCode;
+    _hideContentOverlay();
+
+    print("Monitering completed");
   }
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
     return Scaffold(
       appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
         title: Text(widget.title),
       ),
       body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
         child: Row(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          //
-          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-          // action in the IDE, or press "p" in the console), to see the
-          // wireframe for each widget.
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             SizedBox(
               width: 150,
               height: 75,
               child: ElevatedButton(
-                onPressed: () {
-                  // Do something when the first button is pressed
-                },
+                onPressed: startMonitering,
                 style: ElevatedButton.styleFrom(
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10.0),
@@ -119,11 +143,6 @@ class _MyHomePageState extends State<MyHomePage> {
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
 }
