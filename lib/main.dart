@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:io';
 import 'dart:async';
-import 'package:path_provider/path_provider.dart';
+import 'package:rattu_tota/process_io_script.dart';
 
 void main() {
   runApp(const MyApp());
@@ -36,33 +36,6 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   late OverlayEntry? _overlayEntry;
 
-  List<String> fileNames = [];
-  String? _selectedFilename;
-
-  @override
-  void initState() {
-    super.initState();
-    listFilesInDocumentsDirectory();
-  }
-
-  Future<void> listFilesInDocumentsDirectory() async {
-    String currentScriptPath = File.fromUri(Platform.script).parent.path;
-    print("Path of the current Dart script: $currentScriptPath");
-
-    final dir = Directory("$currentScriptPath\\Log_File");
-    print(dir);
-    final List<FileSystemEntity> entities = await dir.list().toList();
-
-    final List<String> names = entities.whereType<File>().map((entity) {
-      return entity.path.split('\\').last.split('.').first; // Extract file name from path
-    }).toList();
-
-    setState(() {
-      fileNames = names;
-    });
-    
-    print(fileNames);
-  }
 
   void _showLoaderOverlay() {
     WidgetsBinding.instance!.addPostFrameCallback((_) {
@@ -179,85 +152,8 @@ class _MyHomePageState extends State<MyHomePage> {
     showModalBottomSheet(
       context: context, 
       builder: (BuildContext context) {
-        return ShowModalDropdown();
+        return const ProcessInteractionScreen();
       }
-    );
-  }
-}
-
-class ShowModalDropdown extends StatefulWidget {
-  const ShowModalDropdown({super.key});
-
-  @override
-  State<ShowModalDropdown> createState() => _ShowModalDropdownState();
-}
-
-class _ShowModalDropdownState extends State<ShowModalDropdown> {
-  List<String> _filenames = [];
-  String? _selectedFilename;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadFilenames();
-  }
-
-  Future<void> _loadFilenames() async {
-    String currentScriptPath = File.fromUri(Platform.script).parent.path;
-    print("Path of the current Dart script: $currentScriptPath");
-
-    final dir = Directory("$currentScriptPath\\Log_File");
-    print(dir);
-    final List<FileSystemEntity> entities = await dir.list().toList();
-
-    final List<String> names = entities.whereType<File>().map((entity) {
-      return entity.path.split('\\').last.split('.').first; // Extract file name from path
-    }).toList();
-
-    setState(() {
-      _filenames = names;
-    });
-    
-    print(_filenames);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Text(
-          'Select an Option',
-          style: TextStyle(fontSize: 20.0),
-        ),
-        SizedBox(height: 20.0),
-        DropdownButton<String>(
-          hint: Text('Select a Log file'),
-          value: _selectedFilename,
-          onChanged: (newValue) {
-            // Handle dropdown value change
-            setState((){
-              _selectedFilename = newValue;
-            });
-          },
-          items: _filenames.map((item) {
-            return DropdownMenuItem<String>(
-              value: item,
-              child: Text(item),
-            );
-          }).toList(),
-        ),
-        SizedBox(height: 20.0),
-        ElevatedButton(
-          onPressed: () {
-            // Handle form submission
-            // You can use the selectedValue as needed
-            print('Selected Value: $_selectedFilename');
-            Navigator.of(context).pop(); // Close the modal
-          },
-          child: Text('Submit'),
-        ),
-      ],
     );
   }
 }
